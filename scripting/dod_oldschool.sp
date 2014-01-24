@@ -1,14 +1,9 @@
-#pragma semicolon 1
-
 #include <sdkhooks>
 
 #define PLUGIN_NAME    "DoD:S Oldschool"
 #define PLUGIN_VERSION "1.0"
-
 #define CLASS_INIT     0
 #define MAX_CLASS      6
-#define DOD_MAXPLAYERS 33
-#define MAX_HEALTH     100
 
 #define m_iDesiredPlayerClass(%1) (GetEntProp(%1, Prop_Send, "m_iDesiredPlayerClass"))
 
@@ -75,14 +70,24 @@ public Plugin:myinfo =
 
 public OnPluginStart()
 {
+	if ((m_bPlayerDominatingMe = FindSendPropInfo("CDODPlayer", "m_bPlayerDominatingMe")) == -1)
+	{
+		SetFailState("Unable to find prop offset: \"m_bPlayerDominatingMe\"!");
+	}
+
+	if ((m_bPlayerDominated = FindSendPropInfo("CDODPlayer", "m_bPlayerDominated")) == -1)
+	{
+		SetFailState("Unable to find prop offset: \"m_bPlayerDominated\"!");
+	}
+
 	CreateConVar("dod_oldschool_version", PLUGIN_VERSION, PLUGIN_NAME, FCVAR_NOTIFY|FCVAR_DONTRECORD);
 
-	for (new i = 0; i < sizeof(block_cmds); i++)
+	for (new i; i < sizeof(block_cmds); i++)
 	{
 		AddCommandListener(OtherClass, block_cmds[i]);
 	}
 
-	for (new i = 0; i < MAX_CLASS; i++)
+	for (new i; i < MAX_CLASS; i++)
 	{
 		AddCommandListener(OnAlliesClass, allies_cmds[i]);
 		AddCommandListener(OnAxisClass,   axis_cmds[i]);
@@ -92,16 +97,6 @@ public OnPluginStart()
 
 		HookConVarChange(FindConVar(allies_cvars[i]), UpdateClassLimits);
 		HookConVarChange(FindConVar(axis_cvars[i]),   UpdateClassLimits);
-	}
-
-	if ((m_bPlayerDominatingMe = FindSendPropInfo("CDODPlayer", "m_bPlayerDominatingMe")) == -1)
-	{
-		SetFailState("Unable to find prop offset: \"m_bPlayerDominatingMe\"!");
-	}
-
-	if ((m_bPlayerDominated = FindSendPropInfo("CDODPlayer", "m_bPlayerDominated")) == -1)
-	{
-		SetFailState("Unable to find prop offset: \"m_bPlayerDominated\"!");
 	}
 
 	dod_friendlyfiresafezone = FindConVar("dod_friendlyfiresafezone");
@@ -132,7 +127,7 @@ public OnPluginStart()
 
 public UpdateClassLimits(Handle:convar, const String:oldValue[], const String:newValue[])
 {
-	for (new i = 0; i < MAX_CLASS; i++)
+	for (new i; i < MAX_CLASS; i++)
 	{
 		classlimit[TEAM_ALLIES][i] = GetConVarInt(FindConVar(allies_cvars[i]));
 		classlimit[TEAM_AXIS][i]   = GetConVarInt(FindConVar(axis_cvars[i]));
@@ -141,8 +136,8 @@ public UpdateClassLimits(Handle:convar, const String:oldValue[], const String:ne
 
 public OnConfigsExecuted()
 {
-	SetConVarInt(dod_friendlyfiresafezone, 0);
-	SetConVarInt(dod_freezecam, 0);
+	SetConVarBool(dod_friendlyfiresafezone, false);
+	SetConVarBool(dod_freezecam, false);
 
 	SetConVarInt(mp_rocketdamage, 210);
 	SetConVarInt(mp_rocketradius, 160);
@@ -156,7 +151,7 @@ public OnClientPutInServer(client)
 
 public Action:OnTraceAttack(victim, &attacker, &inflictor, &Float:damage, &damagetype, &ammotype, hitbox, hitgroup)
 {
-	if (attacker > 0 && attacker <= MaxClients)
+	if (1 <= attacker <= MaxClients)
 	{
 		if (hitgroup > 3)
 		{
@@ -272,8 +267,8 @@ bool:IsClassAvailable(client, team, desiredclass, cvarnumber)
 
 ResetDominations(attacker, victim)
 {
-	SetEntData(victim, m_bPlayerDominatingMe + attacker, 0, 1, true);
-	SetEntData(attacker,  m_bPlayerDominated + victim,   0, 1, true);
+	SetEntData(victim, m_bPlayerDominatingMe + attacker, false, true, true);
+	SetEntData(attacker,  m_bPlayerDominated + victim,   false, true, true);
 }
 
 PrintUserMessage(client, desiredclass, const String:command[])
