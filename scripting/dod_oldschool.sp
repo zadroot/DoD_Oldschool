@@ -65,7 +65,7 @@ public Plugin:myinfo =
 	description = "Enables old features (no freezecam, collision, etc) which was available before \"palermo update\"",
 	version     = PLUGIN_VERSION,
 	url         = "http://dodsplugins.com/"
-};
+}
 
 
 public OnPluginStart()
@@ -167,7 +167,7 @@ public Action:OnTraceAttack(victim, &attacker, &inflictor, &Float:damage, &damag
 public Action:OnPlayerDeath_Pre(Handle:event, String:name[], bool:dontBroadcast)
 {
 	if (GetEventBool(event, "dominated")
-	|| GetEventBool(event, "revenge"))
+	||  GetEventBool(event, "revenge"))
 	{
 		SetEventBool(event, "dominated", false);
 		SetEventBool(event, "revenge",   false);
